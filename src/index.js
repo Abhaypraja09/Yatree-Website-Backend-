@@ -77,7 +77,14 @@ app.use((err, req, res, next) => {
 
 // Serve frontend - Catch all routes and send to index.html
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public', 'index.html'));
+  const indexPath = path.join(__dirname, '../public', 'index.html');
+  
+  // Check if file exists to prevent crash
+  if (require('fs').existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).send('Frontend build (index.html) not found in server/public. Please run build:frontend and upload files.');
+  }
 });
 
 // Database connection
