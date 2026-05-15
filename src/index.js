@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
+const path = require('path');
 const mongoSanitize = require('express-mongo-sanitize');
 const rateLimit = require('express-rate-limit');
 
@@ -50,6 +51,9 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
+// Static files serving
+app.use(express.static(path.join(__dirname, '../public')));
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/bookings', bookingRoutes);
@@ -71,9 +75,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Basic route
-app.get('/', (req, res) => {
-  res.send('Premium Taxi Booking API is running...');
+// Serve frontend - Catch all routes and send to index.html
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
 
 // Database connection
