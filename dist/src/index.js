@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
+const path = require('path');
 const mongoSanitize = require('express-mongo-sanitize');
 const rateLimit = require('express-rate-limit');
 
@@ -15,6 +16,7 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const vehicleRoutes = require('./routes/vehicleRoutes');
 const inquiryRoutes = require('./routes/inquiryRoutes');
 const blogRoutes = require('./routes/blogRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 
 const cookieParser = require('cookie-parser');
 
@@ -27,7 +29,19 @@ const app = express();
 app.use(helmet());
 app.use(cookieParser());
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // In development, allow any origin dynamically to support multiple local ports/IPs
+    if (process.env.NODE_ENV === 'development' || !origin) {
+      callback(null, true);
+    } else {
+      const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+      if (origin === clientUrl) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    }
+  },
   credentials: true
 }));
 // Body parser
@@ -50,12 +64,16 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
+// Static files serving
+app.use(express.static(path.join(__dirname, '../public')));
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/inquiries', inquiryRoutes);
 app.use('/api/blogs', blogRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {
@@ -71,9 +89,16 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Basic route
-app.get('/', (req, res) => {
-  res.send('Premium Taxi Booking API is running...');
+// Serve frontend - Catch all routes and send to index.html
+app.get(/.*/, (req, res) => {
+  const indexPath = path.join(__dirname, '../public', 'index.html');
+  
+  // Check if file exists to prevent crash
+  if (require('fs').existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).send('Frontend build (index.html) not found in server/public. Please run build:frontend and upload files.');
+  }
 });
 
 // Database connection

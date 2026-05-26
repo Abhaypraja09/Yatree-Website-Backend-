@@ -16,6 +16,7 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const vehicleRoutes = require('./routes/vehicleRoutes');
 const inquiryRoutes = require('./routes/inquiryRoutes');
 const blogRoutes = require('./routes/blogRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 
 const cookieParser = require('cookie-parser');
 
@@ -28,7 +29,19 @@ const app = express();
 app.use(helmet());
 app.use(cookieParser());
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // In development, allow any origin dynamically to support multiple local ports/IPs
+    if (process.env.NODE_ENV === 'development' || !origin) {
+      callback(null, true);
+    } else {
+      const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+      if (origin === clientUrl) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    }
+  },
   credentials: true
 }));
 // Body parser
@@ -60,6 +73,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/inquiries', inquiryRoutes);
 app.use('/api/blogs', blogRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {
@@ -76,7 +90,7 @@ app.use((err, req, res, next) => {
 });
 
 // Serve frontend - Catch all routes and send to index.html
-app.get('*', (req, res) => {
+app.get(/.*/, (req, res) => {
   const indexPath = path.join(__dirname, '../public', 'index.html');
   
   // Check if file exists to prevent crash
