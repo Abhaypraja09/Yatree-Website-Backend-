@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "build:frontend": "cd ../client && npm run build && powershell -Command \"if (Test-Path ../server/public) { Remove-Item -Recurse -Force ../server/public }; New-Item -ItemType Directory -Force -Path ../server/public; Copy-Item -Path out/* -Destination ../server/public -Recurse -Force\"",
+    "build:frontend": "cd ../client && npm run build && powershell -Command \"if (Test-Path ../server/public) { Remove-Item -Recurse -Force ../server/public }; New-Item -ItemType Directory -Force -Path ../server/public; Copy-Item -Path out/* -Destination ../server/public -Recurse -Force; if (!(Test-Path ../server/dist)) { New-Item -ItemType Directory -Force -Path ../server/dist }; if (Test-Path ../server/dist/public) { Remove-Item -Recurse -Force ../server/dist/public }; New-Item -ItemType Directory -Force -Path ../server/dist/public; Copy-Item -Path out/* -Destination ../server/dist/public -Recurse -Force\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
